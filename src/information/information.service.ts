@@ -25,8 +25,20 @@ export class InformationService {
       .getMany();
   }
 
-  create(@Body() createInformationDto: CreateInformationDto) {
-    return this.informationRepository.create(createInformationDto);
+  async create(createInformationDto: CreateInformationDto) {
+    try {
+      const hostname = os.hostname();
+      const IP = getIPAddress();
+      const newInformation = this.informationRepository.create({
+        ...createInformationDto,
+        hostname,
+        IP,
+      });
+      const savedInformation = await this.informationRepository.save(newInformation);
+      return savedInformation;
+    } catch (error) {
+      throw new Error(`Error creating information: ${error.message}`);
+    }
   }
 
   findAll() {
@@ -45,3 +57,16 @@ export class InformationService {
     return this.informationRepository.delete(idInformation);
   }
 }
+
+function getIPAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const iface in interfaces) {
+    for (const details of interfaces[iface]) {
+      if (details.family === 'IPv4' && !details.internal) {
+        return details.address;
+      }
+    }
+  }
+  return '127.0.0.1'; 
+}
+
