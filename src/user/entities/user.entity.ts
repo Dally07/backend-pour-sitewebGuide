@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from "ty
 import { Departement } from "../../departement/entities/departement.entity";
 import { Information } from "../../information/entities/information.entity";
 
+
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
@@ -16,6 +17,8 @@ export class User {
     
     @Column()
     salt: string;
+
+   
 
     @ManyToOne(() => Departement, departement => departement.user)
     departement: Departement;

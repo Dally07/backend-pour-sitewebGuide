@@ -6,6 +6,7 @@ import { UpdateInformationDto } from './dto/update-information.dto';
 @Controller('information')
 export class InformationController {
   constructor(private readonly informationService: InformationService) {}
+  
 
   @Post()
   create(@Body() createInformationDto: CreateInformationDto) {
