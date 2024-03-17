@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn } from "typeorm";
 import { Departement } from "../../departement/entities/departement.entity";
 import { Information } from "../../information/entities/information.entity";
 
@@ -21,6 +21,7 @@ export class User {
    
 
     @ManyToOne(() => Departement, departement => departement.user)
+    @JoinColumn({name: 'departementIdDepartement'})
     departement: Departement;
 
     @OneToMany(() => Information, information => information.user)

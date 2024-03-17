@@ -9,9 +9,9 @@ export class InformationController {
   
 
   @Post()
-  create(@Body() createInformationDto: CreateInformationDto) {
-    return this.informationService.create(createInformationDto);
-  }
+async create(@Body() createInformationDto: CreateInformationDto, req: Request) {
+  return await this.informationService.create(createInformationDto, req);
+}
 
   @Get()
   findAll() {

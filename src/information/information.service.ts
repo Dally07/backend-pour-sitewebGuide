@@ -4,7 +4,8 @@ import { UpdateInformationDto } from './dto/update-information.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 import { Repository } from 'typeorm';
-import os from 'os';
+import * as dns from 'dns';
+import requestIp from 'request-ip'
 
 @Injectable()
 export class InformationService {
@@ -25,10 +26,11 @@ export class InformationService {
       .getMany();
   }
 
-  async create(createInformationDto: CreateInformationDto) {
+
+
+  async create(createInformationDto: CreateInformationDto, req: Request) {
     try {
-      const hostname = os.hostname();
-      const IP = getIPAddress();
+      const { hostname, IP } = await this.getHostnameAndIP(req);
       const newInformation = this.informationRepository.create({
         ...createInformationDto,
         hostname,
@@ -41,13 +43,12 @@ export class InformationService {
     }
   }
 
-  findAll() {
-    return this.informationRepository.find();
+  private async getHostnameAndIP(req: Request): Promise<{ hostname: string; IP: string }> {
+    const ipAddress = await this.getIpAddress(req); 
+    const hostname = await this.getHostname(ipAddress);
+    return { hostname, IP: ipAddress };
   }
-
-  findOne(idInformation: number) {
-    return this.informationRepository.findOneBy({idInformation});
-  }
+  
 
   update(idInformation: number, updateInformationDto: UpdateInformationDto) {
     return this.informationRepository.update(idInformation, updateInformationDto);
@@ -56,17 +57,34 @@ export class InformationService {
   remove(idInformation: number) {
     return this.informationRepository.delete(idInformation);
   }
+
+  findAll() {
+    return this.informationRepository.find();
+  }
+
+  findOne(idInformation: number) {
+    return this.informationRepository.findOneBy({idInformation});
+  }
+
+
+  private async getIpAddress(req: Request): Promise<string> {
+    return requestIp.getClientIp(req);
+  }
+
+  private async getHostname(ip: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      dns.lookup(ip, (err, address, family) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(address);
+        }
+      });
+    });
+  }
+
+ 
 }
 
-function getIPAddress() {
-  const interfaces = os.networkInterfaces();
-  for (const iface in interfaces) {
-    for (const details of interfaces[iface]) {
-      if (details.family === 'IPv4' && !details.internal) {
-        return details.address;
-      }
-    }
-  }
-  return '127.0.0.1'; 
-}
+
 
