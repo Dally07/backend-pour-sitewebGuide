@@ -60,8 +60,23 @@
 
 
 
-    update(userId: number, updateUserDto: UpdateUserDto) {
-      return this.userRepository.update(userId, updateUserDto);
+    async update(userId: number, updateUserDto: UpdateUserDto) {
+      try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(updateUserDto.password, salt);
+        const newUser = this.userRepository.create({
+          ...updateUserDto,
+          password: hashedPassword,
+          salt: salt
+        });
+    
+        const savedUser = this.userRepository.update(userId, updateUserDto);
+        return savedUser;
+      } catch (error) {
+        
+        throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
+      }
+     
     }
 
 

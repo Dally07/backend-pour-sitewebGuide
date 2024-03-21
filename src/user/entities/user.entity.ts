@@ -20,7 +20,7 @@ export class User {
 
    
 
-    @ManyToOne(() => Departement, departement => departement.user)
+   @ManyToOne(() => Departement, departement => departement.user)
     @JoinColumn({name: 'departementIdDepartement'})
     departement: Departement;
 

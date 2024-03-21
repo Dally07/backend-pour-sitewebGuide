@@ -4,6 +4,7 @@ import { UpdateDepartementDto } from './dto/update-departement.dto';
 import { Departement } from '../departement/entities/departement.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { error } from 'console';
 
 @Injectable()
 export class DepartementService {
@@ -14,8 +15,16 @@ export class DepartementService {
    ) {}
 
 
-  create(@Body() createDepartementDto: CreateDepartementDto) {
-    return this.departementRepository.create(createDepartementDto);
+ async create(@Body() createDepartementDto: CreateDepartementDto): Promise<Departement> {
+   try{
+    const newdep = this.departementRepository.create({
+      ...createDepartementDto
+    });
+    const savedDep = await this.departementRepository.save(newdep);
+    return savedDep;
+   } catch (error) {
+    throw new Error(`erreur lors de la creation du depatement: ${error.message}`);
+   }
   }
 
   findAll() {
