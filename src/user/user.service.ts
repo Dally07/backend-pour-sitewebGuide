@@ -1,4 +1,4 @@
-  import { Body, Injectable } from '@nestjs/common';
+  import { Body, Injectable, NotFoundException } from '@nestjs/common';
   import { CreateUserDto } from './dto/create-user.dto';
   import { UpdateUserDto } from './dto/update-user.dto';
   import { InjectRepository } from '@nestjs/typeorm';
@@ -22,7 +22,8 @@
         const newUser = this.userRepository.create({
           ...createUserDto,
           password: hashedPassword,
-          salt: salt
+          salt: salt,
+          
         });
     
         const savedUser = await this.userRepository.save(newUser);
@@ -54,30 +55,34 @@
 
 
 
-    findOne(userId: number) {
-      return this.userRepository.findOneBy({userId});
+    async findOne(userId: number): Promise<User | undefined> {
+      return this.userRepository.findOne({ where: { userId } });
+}
+
+
+    async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
+      const user = await this.userRepository.findOne({ where: { userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
     }
 
+    if (updateUserDto.username) {
+      user.username = updateUserDto.username;
+    }
 
+    if (updateUserDto.departementIdDepartement) {
+      user.departementIdDepartement = updateUserDto.departementIdDepartement;
+    }
 
-    async update(userId: number, updateUserDto: UpdateUserDto) {
-      try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(updateUserDto.password, salt);
-        const newUser = this.userRepository.create({
-          ...updateUserDto,
-          password: hashedPassword,
-          salt: salt
-        });
-    
-        const savedUser = this.userRepository.update(userId, updateUserDto);
-        return savedUser;
-      } catch (error) {
-        
-        throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
+    if (updateUserDto.password) {
+      if (!(await bcrypt.compare(updateUserDto.currentPassword, user.password))) {
+        throw new Error('Mot de passe actuel incorrect');
       }
-     
+      user.password = await bcrypt.hash(updateUserDto.password, 10);
     }
+
+    return this.userRepository.save(user);
+  }
 
 
 

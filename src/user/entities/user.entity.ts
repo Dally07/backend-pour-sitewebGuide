@@ -18,7 +18,8 @@ export class User {
     @Column()
     salt: string;
 
-   
+    @Column({ name: 'departementIdDepartement' })
+    departementIdDepartement: number;
 
    @ManyToOne(() => Departement, departement => departement.user)
     @JoinColumn({name: 'departementIdDepartement'})
