@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors } from '@nestjs/common';
 import { InformationService } from './information.service';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
+import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
+
+
+
+ export interface ExtendedRequest extends Request {
+  anonymizedIpAddress: string;
+  hostname: string;
+  clientIp: string;
+}
 
 @Controller('information')
 export class InformationController {
@@ -9,9 +18,35 @@ export class InformationController {
   
 
   @Post()
-async create(@Body() createInformationDto: CreateInformationDto, req: Request) {
-  return await this.informationService.create(createInformationDto, req);
-}
+  @UseInterceptors(IpHostnameMiddleware)
+  async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest) {
+    try {
+      const information = await this.informationService.create(createInformationDto, req);
+      return information;
+    } catch (error) {
+      return this.handleCreateError(error);
+    }
+    
+  }
+
+  private handleCreateError(error: Error): any {
+    if (error.message.includes('ER DUP ENTRY')) {
+      return {
+        success: false,
+        message: `l'identifiant est deja utiliser`,
+      };
+    } else if (error.message.includes('ER REFERENCED ROW')) {
+      return{
+        success: false,
+        message: `l'utilisateur n'existe pas`
+      };
+    } else {
+      return{
+        success: false,
+        message: `erreur lors de la creation de l'information: ${error.message}`
+      }
+    }
+  }
 
   @Get()
   findAll() {

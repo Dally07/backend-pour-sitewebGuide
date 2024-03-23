@@ -4,8 +4,8 @@ import { UpdateInformationDto } from './dto/update-information.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 import { Repository } from 'typeorm';
-import * as dns from 'dns';
-import requestIp from 'request-ip'
+import { ExtendedRequest } from './information.controller';
+
 
 @Injectable()
 export class InformationService {
@@ -13,6 +13,7 @@ export class InformationService {
   constructor(
     @InjectRepository(Information)
     private readonly informationRepository: Repository<Information>,
+   
   ){}
   
 
@@ -28,26 +29,28 @@ export class InformationService {
 
 
 
-  async create(createInformationDto: CreateInformationDto, req: Request) {
-    try {
-      const { hostname, IP } = await this.getHostnameAndIP(req);
+  async create(createInformationDto: CreateInformationDto, req: ExtendedRequest): Promise<Information> {
+    try{
+      const {hostname, IP} = this.getHostnameAndIP(req);
       const newInformation = this.informationRepository.create({
         ...createInformationDto,
         hostname,
-        IP,
+        IP: req.clientIp,
       });
       const savedInformation = await this.informationRepository.save(newInformation);
       return savedInformation;
-    } catch (error) {
-      throw new Error(`Error creating information: ${error.message}`);
-    }
+    
+  }catch (error) {
+    throw new Error(`eerror for creating information: ${error.message}`);
+  }
   }
 
-  private async getHostnameAndIP(req: Request): Promise<{ hostname: string; IP: string }> {
-    const ipAddress = await this.getIpAddress(req); 
-    const hostname = await this.getHostname(ipAddress);
-    return { hostname, IP: ipAddress };
+  private getHostnameAndIP(req: ExtendedRequest) : {hostname: string; IP: string} {
+    const ipAddress = req.clientIp;
+    const hostname = req.hostname;
+    return {hostname, IP: ipAddress};
   }
+
   
 
   update(idInformation: number, updateInformationDto: UpdateInformationDto) {
@@ -67,21 +70,9 @@ export class InformationService {
   }
 
 
-  private async getIpAddress(req: Request): Promise<string> {
-    return requestIp.getClientIp(req);
-  }
+  
 
-  private async getHostname(ip: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      dns.lookup(ip, (err, address, family) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(address);
-        }
-      });
-    });
-  }
+
 
  
 }

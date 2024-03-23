@@ -21,6 +21,9 @@ export class Information {
     @Column()
     corpsInfo: string;
 
+    @Column({name: 'userId'})
+    userId: number;
+
     @ManyToOne(() => User, user => user.information)
       @JoinColumn({name: 'userId'})
     user: User;

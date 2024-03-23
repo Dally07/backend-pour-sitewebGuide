@@ -4,9 +4,14 @@ import { InformationController } from './information.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 
+
+
 @Module({
   imports: [TypeOrmModule.forFeature([Information])],
   controllers: [InformationController],
   providers: [InformationService],
+
 })
-export class InformationModule {}
+export class InformationModule {
+
+}
