@@ -6,11 +6,14 @@ import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
 
 
 
- export interface ExtendedRequest extends Request {
+export interface ExtendedRequest extends Request {
   anonymizedIpAddress: string;
   hostname: string;
   clientIp: string;
 }
+
+
+
 
 @Controller('information')
 export class InformationController {
@@ -21,7 +24,11 @@ export class InformationController {
   @UseInterceptors(IpHostnameMiddleware)
   async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest) {
     try {
-      const information = await this.informationService.create(createInformationDto, req);
+      const ip = req.clientIp;
+      const hostname = req.hostname;
+      const anonymizedIpAddress = req.anonymizedIpAddress;
+
+      const information = await this.informationService.create
       return information;
     } catch (error) {
       return this.handleCreateError(error);

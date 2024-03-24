@@ -4,7 +4,7 @@ import { UpdateInformationDto } from './dto/update-information.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 import { Repository } from 'typeorm';
-import { ExtendedRequest } from './information.controller';
+
 
 
 @Injectable()
@@ -29,13 +29,13 @@ export class InformationService {
 
 
 
-  async create(createInformationDto: CreateInformationDto, req: ExtendedRequest): Promise<Information> {
+  async create(createInformationDto: CreateInformationDto, { hostname, IP}): Promise<Information> {
     try{
-      const {hostname, IP} = this.getHostnameAndIP(req);
+      
       const newInformation = this.informationRepository.create({
         ...createInformationDto,
         hostname,
-        IP: req.clientIp,
+        IP,
       });
       const savedInformation = await this.informationRepository.save(newInformation);
       return savedInformation;
@@ -45,10 +45,15 @@ export class InformationService {
   }
   }
 
-  private getHostnameAndIP(req: ExtendedRequest) : {hostname: string; IP: string} {
-    const ipAddress = req.clientIp;
+  private getRemteAdress(req: Request) : {hostname: string; IP: string} {
+    const ipAddress = req.headers['x-forwader-for'] as string | undefined;
     const hostname = req.hostname;
-    return {hostname, IP: ipAddress};
+    if (ipAddress) {
+      const ips = ipAddress.split(',');
+      return {hostname, IP: ips[0].trim() };
+    } else {
+      return {hostname, IP: req.ip };
+    }
   }
 
   
@@ -68,12 +73,6 @@ export class InformationService {
   findOne(idInformation: number) {
     return this.informationRepository.findOneBy({idInformation});
   }
-
-
-  
-
-
-
  
 }
 
