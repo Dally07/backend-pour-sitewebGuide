@@ -29,13 +29,15 @@ export class InformationService {
 
 
 
-  async create(createInformationDto: CreateInformationDto, { hostname, IP}): Promise<Information> {
+  async create(createInformationDto: CreateInformationDto, { IP, hostname }): Promise<Information> {
     try{
       
       const newInformation = this.informationRepository.create({
         ...createInformationDto,
-        hostname,
         IP,
+        hostname,
+        date: new Date(),
+        
       });
       const savedInformation = await this.informationRepository.save(newInformation);
       return savedInformation;
@@ -45,16 +47,7 @@ export class InformationService {
   }
   }
 
-  private getRemteAdress(req: Request) : {hostname: string; IP: string} {
-    const ipAddress = req.headers['x-forwader-for'] as string | undefined;
-    const hostname = req.hostname;
-    if (ipAddress) {
-      const ips = ipAddress.split(',');
-      return {hostname, IP: ips[0].trim() };
-    } else {
-      return {hostname, IP: req.ip };
-    }
-  }
+ 
 
   
 

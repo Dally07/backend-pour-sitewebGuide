@@ -7,7 +7,7 @@ import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
 
 
 export interface ExtendedRequest extends Request {
-  anonymizedIpAddress: string;
+  IP: string;
   hostname: string;
   clientIp: string;
 }
@@ -24,17 +24,17 @@ export class InformationController {
   @UseInterceptors(IpHostnameMiddleware)
   async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest) {
     try {
-      const ip = req.clientIp;
-      const hostname = req.hostname;
-      const anonymizedIpAddress = req.anonymizedIpAddress;
+    const { IP, hostname} = req;
 
-      const information = await this.informationService.create
+      const information = await this.informationService.create(createInformationDto, { IP, hostname});
       return information;
+
     } catch (error) {
       return this.handleCreateError(error);
     }
     
   }
+
 
   private handleCreateError(error: Error): any {
     if (error.message.includes('ER DUP ENTRY')) {
