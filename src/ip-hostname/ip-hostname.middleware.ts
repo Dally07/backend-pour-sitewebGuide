@@ -1,12 +1,20 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, Ip, NestMiddleware } from '@nestjs/common';
+import { Console } from 'console';
 import { NextFunction, Request, Response } from 'express'; 
 
 
 @Injectable()
 export class IpHostnameMiddleware implements NestMiddleware {
+
   async use(req: Request, res: Response, next: NextFunction) {
     try {
       const {hostname, IP} = await this.getRemoteAdress(req);
+
+   
+      req.ip = IP;
+      req.hostname = hostname;
+
+  
 
 
       next();

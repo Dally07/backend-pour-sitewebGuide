@@ -12,6 +12,12 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  @Post('login')
+  async login(@Body() loginData: any) {
+    return
+     this.userService.authenticateUser(loginData.username, loginData.password);
+  }
+
   @Get()
   findAll() {
     return this.userService.findAll();
