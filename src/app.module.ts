@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -10,16 +10,15 @@ import { InformationModule } from './information/information.module';
 import { Information } from './information/entities/information.entity';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
-import { JwtModule } from '@nestjs/jwt';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import * as cors from 'cors';
 
 
 
-const optionCORS: CorsOptions = {
-  origin: 'http://localhost:4200',
-  credentials: true,
-  allowedHeaders: ['content-type' , 'Authirization' , 'X-Request-With'],
-  methods: ['GET', 'POST' , 'PUT', 'DELETE', 'OPTIONS']
+const corsOption: CorsOptions = {
+
+ 
+
 }
 
 @Module({
@@ -44,8 +43,15 @@ AuthModule,
   controllers: [AppController],
   providers: [AppService, AuthService],
 })
-@EnableCors(optionCORS)
 export class AppModule {
-  constructor () {}
+  configure (consumer: MiddlewareConsumer) {
+    const corsOption: CorsOptions ={
+      origin: 'http://localhost:4200',
+      credentials: true,
+      allowedHeaders: ['content-type' , 'Authirization' , 'X-Request-With'],
+      methods: ['GET', 'POST' , 'PUT', 'DELETE', 'OPTIONS']
+    };
+    consumer.apply(cors(corsOption)).forRoutes('*');
+  }
   
 }
