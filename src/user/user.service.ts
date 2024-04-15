@@ -38,12 +38,16 @@
       return this.userRepository.findOne({ where: { username: username } });
     }
     
-    async authenticateUser(username: string, password: string): Promise<boolean> {
-      const user = await this.findByUsername(username);
+    async authenticateUser(username: string, password: string): Promise<User | undefined> {
+      const user = await this.userRepository.findOne({where: {username: username}});
       if (!user) {
-        return false;
+        return undefined;
       }
-      return bcrypt.compare(password, user.password);
+      const isPaswordValid = await bcrypt.compare(password, user.password);
+      if (isPaswordValid) {
+        return user;
+      }
+      return undefined;
     }
 
 
