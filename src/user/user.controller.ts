@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
+
+
 
 @Controller('user')
 export class UserController {
@@ -12,20 +15,17 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-@Post('login')
-  async login(@Body() loginData: any) {
-    const user = await this.userService.authenticateUser(loginData.username, loginData.password);
-     if (user) {
-      return user;
-     } else {
-        return { message: `user or password incorect`};
-     }
-  }
 
 @Get()
   findAll() {
     return this.userService.findAll();
   }
+
+  @Get(':username')
+  async findByUsername(@Param('username') username: string): Promise<User | undefined> {
+    return this.userService.findByUsername(username);
+  }
+
 
 @Get(':id')
   findOne(@Param('id') id: string) {

@@ -15,7 +15,7 @@
     ) {}
 
     
-    async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
       try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
@@ -33,38 +33,49 @@
         throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
       }
     }
+
+
+
     
-    async findByUsername(username: string): Promise<User | undefined> {
+  async findByUsername(username: string): Promise<User | undefined> {
       return this.userRepository.findOne({ where: { username: username } });
     }
+
+
+
+
     
-    async authenticateUser(username: string, password: string): Promise<User | undefined> {
+  async authenticateUser(username: string, password: string): Promise<User | undefined> {
       const user = await this.userRepository.findOne({where: {username: username}});
       if (!user) {
-        return undefined;
+        return null;
       }
       const isPaswordValid = await bcrypt.compare(password, user.password);
       if (isPaswordValid) {
         return user;
       }
-      return undefined;
+      return null;
     }
 
 
 
 
-    findAll() {
+  findAll() {
       return this.userRepository.find();
     }
 
 
 
-    async findOne(userId: number): Promise<User | undefined> {
-      return this.userRepository.findOne({ where: { userId } });
+
+
+  async findOne(userId: number) {
+      return this.userRepository.findOneBy({ userId  });
 }
 
 
-    async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
+
+
+  async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
       const user = await this.userRepository.findOne({ where: { userId } });
     if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');
@@ -90,7 +101,10 @@
 
 
 
-    remove(userId: number) {
+
+
+
+  remove(userId: number) {
       return this.userRepository.delete(userId) ;
     }
   }

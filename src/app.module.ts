@@ -8,18 +8,14 @@ import { DepartementModule } from './departement/departement.module';
 import { Departement } from './departement/entities/departement.entity';
 import { InformationModule } from './information/information.module';
 import { Information } from './information/entities/information.entity';
-import { AuthService } from './auth/auth.service';
-import { AuthModule } from './auth/auth.module';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
+import { AuthModule } from './auth/auth.module';
 import * as cors from 'cors';
+import * as dotenv from 'dotenv';
 
-
-
-const corsOption: CorsOptions = {
-
- 
-
-}
+dotenv.config();
 
 @Module({
   imports: [
@@ -35,13 +31,17 @@ const corsOption: CorsOptions = {
     synchronize : true
 
 }),
+JwtModule.register({
+  secret: process.env.JWT_SECRET,
+  signOptions: {expiresIn: '3600s'}
+}),
 UserModule,
 DepartementModule,
 InformationModule,
 AuthModule,
 ],
   controllers: [AppController],
-  providers: [AppService, AuthService],
+  providers: [AppService, JwtService, JwtService],
 })
 export class AppModule {
   configure (consumer: MiddlewareConsumer) {
