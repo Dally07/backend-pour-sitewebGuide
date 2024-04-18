@@ -17,6 +17,10 @@
     
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
       try {
+        const existingUser = await this.userRepository.findOne({where: {username: createUserDto.username}});
+        if (existingUser) {
+          throw new Error ('username already exist');
+        }
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
         const newUser = this.userRepository.create({
@@ -48,13 +52,13 @@
   async authenticateUser(username: string, password: string): Promise<User | undefined> {
       const user = await this.userRepository.findOne({where: {username: username}});
       if (!user) {
-        return null;
+        return undefined;
       }
       const isPaswordValid = await bcrypt.compare(password, user.password);
       if (isPaswordValid) {
         return user;
       }
-      return null;
+      return undefined;
     }
 
 

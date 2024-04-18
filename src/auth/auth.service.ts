@@ -18,4 +18,8 @@ export class AuthService {
             acces_token: await this.jwtService.signAsync(payload),
         };
     }
+     async generatedAccesToken(user: any): Promise<string> {
+        const payload = {sub: user.userId, username: user.username};
+        return await this.jwtService.signAsync(payload);
+     }
 }

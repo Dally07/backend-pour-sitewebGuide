@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards } from '@nestjs/common';
 import { InformationService } from './information.service';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
+import { UserService } from 'src/user/user.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { CurrentUser } from 'src/decorators/current_user.decorator';
 
 
 
@@ -10,23 +13,25 @@ export interface ExtendedRequest extends Request {
   IP: string;
   hostname: string;
   clientIp: string;
+  user: any;
 }
 
 
 
 
 @Controller('information')
+@UseGuards(AuthGuard)
 export class InformationController {
-  constructor(private readonly informationService: InformationService) {}
+  constructor(private readonly informationService: InformationService, private readonly userService: UserService) {}
   
 
   @Post()
   @UseInterceptors(IpHostnameMiddleware)
-  async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest) {
+  async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest, @CurrentUser() user: any) {
     try {
     const { IP, hostname} = req;
-
-      const information = await this.informationService.create(createInformationDto, { IP, hostname});
+      const user = req.user;
+      const information = await this.informationService.create(createInformationDto, user, { IP, hostname});
       return information;
 
     } catch (error) {
@@ -56,8 +61,9 @@ export class InformationController {
   }
 
   @Get()
-  findAll() {
-    return this.informationService.findAll();
+  async findAll(@Request() req: any) {
+    const user = req.user;
+    return this.informationService.findAllByUserDepartement(user);
   }
 
   @Get(':id')

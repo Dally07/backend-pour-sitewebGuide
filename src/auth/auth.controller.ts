@@ -1,10 +1,11 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Get, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
+import { UserService } from 'src/user/user.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor (private authService: AuthService ){}
+    constructor (private authService: AuthService, private readonly userServive: UserService ){}
 
     @HttpCode(HttpStatus.OK)
     @Post('login')
@@ -14,8 +15,9 @@ export class AuthController {
 
     @UseGuards(AuthGuard)
     @Get('profile')
-    getProfil(@Request() req) {
-        return req.user;
+    async getProfil(@Request() req) {
+        const user = await this.userServive.findByUsername(req.user.userId)
+        return user;
 
         
     }

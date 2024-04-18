@@ -1,9 +1,12 @@
-import { Body, Injectable } from '@nestjs/common';
+import { Body, Injectable, UseFilters, UseGuards } from '@nestjs/common';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 import { Repository } from 'typeorm';
+import { AuthGuard } from 'src/auth/auth.guard';
+
+
 
 
 
@@ -27,16 +30,25 @@ export class InformationService {
       .getMany();
   }
 
+  @UseGuards(AuthGuard)
+  async findAllByUserDepartement(currentUser: any): Promise<Information[]> {
+    return this.informationRepository.find({
+      where: {user: {departementIdDepartement: currentUser.departementIdDepartement}}
+    })
+  }
 
 
-  async create(createInformationDto: CreateInformationDto, { IP, hostname }): Promise<Information> {
+
+  async create(createInformationDto: CreateInformationDto, user: any, { IP, hostname }): Promise<Information> {
     try{
       
+
       const newInformation = this.informationRepository.create({
         ...createInformationDto,
         IP,
         hostname,
         date: new Date(),
+        user,
         
       });
       const savedInformation = await this.informationRepository.save(newInformation);
