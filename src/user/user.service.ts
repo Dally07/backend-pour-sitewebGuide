@@ -72,8 +72,8 @@
 
 
 
-  async findOne(userId: number) {
-      return this.userRepository.findOneBy({ userId  });
+  findOne(userId: number) {
+      return this.userRepository.findOneBy({userId});
 }
 
 

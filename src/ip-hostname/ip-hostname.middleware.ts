@@ -6,13 +6,13 @@ import { NextFunction, Request, Response } from 'express';
 @Injectable()
 export class IpHostnameMiddleware implements NestMiddleware {
 
-  async use(req: Request, res: Response, next: NextFunction) {
+  async use(reqs: Request, res: Response, next: NextFunction) {
     try {
-      const {hostname, IP} = await this.getRemoteAdress(req);
+      const {hostname, IP} = await this.getRemoteAdress(reqs);
 
    
-      req.ip = IP;
-      req.hostname = hostname;
+      reqs.ip = IP;
+      reqs.hostname = hostname;
 
   
 
@@ -31,7 +31,7 @@ export class IpHostnameMiddleware implements NestMiddleware {
     const hostname = req.hostname;
 
     if(ipAddress){
-      const ips = ipAddress.split(',');
+      const ips = ipAddress.split(' , ');
       return{ hostname, IP: ips[0].trim() };
     }else {
       return {hostname, IP: req.ip};

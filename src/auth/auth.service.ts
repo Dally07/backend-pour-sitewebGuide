@@ -12,14 +12,27 @@ export class AuthService {
         if (!user) {
             throw new UnauthorizedException();
         }
-        const payload = {sub: user.userId, username: user.username};
+        const payload = {sub: user.userId, username: user.username, departement: user.departementIdDepartement};
         
         return {
             acces_token: await this.jwtService.signAsync(payload),
         };
     }
+
+
      async generatedAccesToken(user: any): Promise<string> {
-        const payload = {sub: user.userId, username: user.username};
+        const payload = {sub: user.userId, username: user.username, departement: user.departementIdDepartement};
         return await this.jwtService.signAsync(payload);
+     }
+
+     async extractUserId(acces_token: string): Promise<number>{
+       try {
+        const payload = await this.jwtService.verifyAsync(acces_token);
+        
+            return payload.sub;
+        
+       } catch {
+        
+       }
      }
 }

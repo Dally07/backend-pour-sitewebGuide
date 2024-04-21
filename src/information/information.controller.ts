@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { InformationService } from './information.service';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
-import { UserService } from 'src/user/user.service';
+import { authInterceptor } from 'src/auth/auth.interceptor';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { CurrentUser } from 'src/decorators/current_user.decorator';
+
+
 
 
 
@@ -13,25 +14,36 @@ export interface ExtendedRequest extends Request {
   IP: string;
   hostname: string;
   clientIp: string;
-  user: any;
+  user: {
+    sub: number;
+    username: string;
+    departement: number;
+}
 }
 
 
 
 
+
+
 @Controller('information')
-@UseGuards(AuthGuard)
+
 export class InformationController {
-  constructor(private readonly informationService: InformationService, private readonly userService: UserService) {}
+  constructor(private readonly informationService: InformationService) {}
   
 
   @Post()
+  @UseGuards(AuthGuard)
   @UseInterceptors(IpHostnameMiddleware)
-  async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest, @CurrentUser() user: any) {
+  async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest) {
+    
+    const userId = req.user.sub;
+
     try {
+    
+    console.log(userId);
     const { IP, hostname} = req;
-      const user = req.user;
-      const information = await this.informationService.create(createInformationDto, user, { IP, hostname});
+      const information = await this.informationService.create(createInformationDto, { IP, hostname}, userId);
       return information;
 
     } catch (error) {
@@ -60,11 +72,21 @@ export class InformationController {
     }
   }
 
-  @Get()
-  async findAll(@Request() req: any) {
-    const user = req.user;
-    return this.informationService.findAllByUserDepartement(user);
+  @Get('department/:userId')
+  async findAllByUserDepartement(@Param('userId') userId: number) {
+    await this.informationService.findAllByUserDepartement(userId)
   }
+
+
+
+@Get()
+async getAll() {
+  return await this.informationService.findAll();
+}
+
+
+
+
 
   @Get(':id')
   findOne(@Param('id') id: string) {

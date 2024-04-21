@@ -1,1 +1,4 @@
-export class CreateInformationDto {}
+export class CreateInformationDto {
+  titreInfo: string;
+  corpsinfo: string;
+}

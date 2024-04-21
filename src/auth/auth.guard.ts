@@ -4,6 +4,9 @@ import { jwtConstants } from "./constantes";
 import { Request } from "express";
 import { error } from "console";
 
+
+
+
 @Injectable()
 export class AuthGuard implements CanActivate{
     constructor(private jwtService: JwtService){}
@@ -25,7 +28,9 @@ export class AuthGuard implements CanActivate{
                 }
             );
                 console.log('payload:' ,payload);
-            request['user'] = payload;
+                console.log('payload.sub:' , payload.sub);
+                request.userId = payload.sub;
+                request.user = payload;
         } catch {
             console.error('erreur de verification jwt' , error);
             throw new UnauthorizedException();
