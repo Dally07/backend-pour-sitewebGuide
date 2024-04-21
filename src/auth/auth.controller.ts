@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Get, Request, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
-import { UserService } from 'src/user/user.service';
+
 
 
 
@@ -15,7 +15,7 @@ interface AuthRequest extends Request{
 
 @Controller('auth')
 export class AuthController {
-    constructor (private authService: AuthService, private readonly userServive: UserService ){}
+    constructor (private authService: AuthService ){}
 
     @HttpCode(HttpStatus.OK)
     @Post('login')
@@ -29,13 +29,4 @@ export class AuthController {
     async getProfil(@Request() req: AuthRequest) {
         return req.user;   
     }
-
-    async  logout(@Request() req: AuthRequest) {
-        const userId = req.user.sub;
-        
-    }
-
-
-    
-   
 }

@@ -3,7 +3,6 @@ import { InformationService } from './information.service';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
-import { authInterceptor } from 'src/auth/auth.interceptor';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 

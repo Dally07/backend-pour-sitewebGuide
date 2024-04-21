@@ -59,11 +59,7 @@ export class InformationService {
         hostname,
         date: new Date(),
         userId
-        
-        
-   
-        
-        
+       
       });
       console.log(userId);
       const savedInformation = await this.informationRepository.save(newInformation);
