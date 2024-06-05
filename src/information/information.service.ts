@@ -1,24 +1,29 @@
-import { Body, ExecutionContext, Injectable, UseFilters, UseGuards } from '@nestjs/common';
+import {Injectable, Logger,  UseGuards } from '@nestjs/common';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 import { Repository } from 'typeorm';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { AuthService } from 'src/auth/auth.service';
-
-
-
+import { User } from 'src/user/entities/user.entity';
+import { Departement } from 'src/departement/entities/departement.entity';
 
 
 
 @Injectable()
 export class InformationService {
 
+
   constructor(
-    @InjectRepository(Information)
+    @InjectRepository(Information) 
     private readonly informationRepository: Repository<Information>,
-    private readonly authService: AuthService
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Departement)
+    private readonly departementRepository: Repository<Departement>,
+
+    private readonly logger = new Logger(InformationService.name),
+   
    
   ){}
   
@@ -50,15 +55,17 @@ export class InformationService {
 
 
 
-  async create(createInformationDto: CreateInformationDto , { IP, hostname }, userId): Promise<Information> {
+  async create(createInformationDto: CreateInformationDto , { IP, hostname }: { IP: string; hostname: string; }, userId: number , imageData: string): Promise<Information> {
     try{
+      
       
       const newInformation = this.informationRepository.create({
         ...createInformationDto,
         IP,
         hostname,
         date: new Date(),
-        userId
+        userId,
+        imageData,
        
       });
       console.log(userId);
@@ -78,19 +85,59 @@ export class InformationService {
     return this.informationRepository.update(idInformation, updateInformationDto);
   }
 
-  remove(idInformation: number) {
-    return this.informationRepository.delete(idInformation);
+  remove(id: number) {
+    return this.informationRepository.delete(id);
   }
 
-  findAll() {
-    return this.informationRepository.find();
+  async findAll(): Promise<Information[] & {imageData: string | null}[]> {
+    const informationlist = await this.informationRepository.find();
+    for (const information of informationlist) {
+      if (information.imageData) {
+        information.imageData = Buffer.from(information.imageData).toString( 'base64');
+      }
+    }
+    return informationlist;
   }
 
   findOne(idInformation: number) {
     return this.informationRepository.findOneBy({idInformation});
   }
+
+  async getInformationByDepartement() {
+
+    try {
+      return await this.informationRepository.query(`
+      SELECT departement.nomDepartement, COUNT(*) AS nombre_informations
+      FROM information
+      INNER JOIN user ON information.userId = user.userId
+      INNER JOIN departement ON user.departementIdDepartement = departement.idDepartement
+      GROUP BY departement.nomDepartement;
+      `);
+      
+     
+    } catch (error) {
+      this.logger.error(`failed to get info dep: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getInformationByDate() {
+    try {
+      return await this.informationRepository.query(`
+      SELECT DATE(information.date) AS date_information, COUNT(*) AS nombre_informations
+      FROM information
+      GROUP BY DATE(information.date)
+      ORDER BY date_information;
+      `); 
+      
+     
+    } catch (error) {
+      this.logger.log(`failed to get info date: ${error.message}`);
+      throw error;
+    }
+
  
 }
 
-
+}
 

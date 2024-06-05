@@ -1,9 +1,9 @@
 import { User } from "../../user/entities/user.entity";
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Information {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
     idInformation: number;
 
     @Column()
@@ -23,6 +23,9 @@ export class Information {
 
     @Column({name: 'userId'})
     userId: number;
+
+    @Column ({type: 'longblob'  , nullable:true})
+    imageData: string;
 
     @ManyToOne(() => User, user => user.information)
       @JoinColumn({name: 'userId'})

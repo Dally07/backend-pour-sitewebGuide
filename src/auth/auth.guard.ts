@@ -16,6 +16,9 @@ export class AuthGuard implements CanActivate{
     
     async canActivate (context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
+        const user = request.user;
+       
+
         const token = this.extractTokenFromHeader(request);
         if (!token) {
             throw new UnauthorizedException();
@@ -37,6 +40,7 @@ export class AuthGuard implements CanActivate{
             throw new UnauthorizedException();
         }
         return true;
+        
     }
     
     private extractTokenFromHeader(request: Request): string | undefined {

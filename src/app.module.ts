@@ -25,7 +25,7 @@ dotenv.config();
     host : "localhost",
     port : 3306,
     username : "root",
-    password : "",
+    password : "noah1112",
     database : "websites",
     entities : [User,Departement,Information],
     synchronize : true
@@ -38,7 +38,7 @@ AuthModule,
 JwtModule.register({
   global: true,
   secret: jwtConstants.secret,
-  signOptions: {expiresIn: '3600s'}
+  signOptions: {expiresIn: '600s'}
 })
 ],
   controllers: [AppController],
@@ -49,8 +49,8 @@ export class AppModule {
     const corsOption: CorsOptions ={
       origin: 'http://localhost:4200',
       credentials: true,
-      allowedHeaders: ['content-type' , 'Authirization' , 'X-Request-With'],
-      methods: ['GET', 'POST' , 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+      allowedHeaders: ['content-type' , 'Authorization' , 'X-Request-With'],
+      methods: ['GET', 'POST' , 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']
     };
     consumer.apply(cors(corsOption)).forRoutes('*');
   }

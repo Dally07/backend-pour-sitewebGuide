@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards, UnauthorizedException, UploadedFile, PipeTransform, Res } from '@nestjs/common';
 import { InformationService } from './information.service';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express, Response } from 'express';
+
 
 
 
@@ -25,6 +28,8 @@ export interface ExtendedRequest extends Request {
 
 
 
+
+
 @Controller('information')
 
 export class InformationController {
@@ -33,16 +38,28 @@ export class InformationController {
 
   @Post()
   @UseGuards(AuthGuard)
-  @UseInterceptors(IpHostnameMiddleware)
-  async create(@Body() createInformationDto: CreateInformationDto, @Request() req: ExtendedRequest) {
+  @UseInterceptors(IpHostnameMiddleware, FileInterceptor('image'))
+  async create(@Body() createInformationDto: CreateInformationDto, 
+                @Request() req: ExtendedRequest,
+              @UploadedFile() file: Express.Multer.File) {
+  
     
     const userId = req.user.sub;
+    const { IP, hostname} = req;
+    let imageData;
+
+    if (file) {
+      imageData = file.path;
+    } else {
+      imageData = createInformationDto.imageData ?? null;
+    }
+    console.log(file);
+    console.log(imageData);
 
     try {
-    
-    console.log(userId);
-    const { IP, hostname} = req;
-      const information = await this.informationService.create(createInformationDto, { IP, hostname}, userId);
+   
+      const information = await this.informationService.create
+      (createInformationDto, { IP, hostname}, userId, imageData );
       return information;
 
     } catch (error) {
@@ -71,6 +88,9 @@ export class InformationController {
     }
   }
 
+
+  
+
   @Get('department/:userId')
   async findAllByUserDepartement(@Param('userId') userId: number) {
     await this.informationService.findAllByUserDepartement(userId)
@@ -80,7 +100,8 @@ export class InformationController {
 
 @Get()
 async getAll() {
-  return await this.informationService.findAll();
+  const allinfo = await this.informationService.findAll();
+  return allinfo.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
 
@@ -98,7 +119,17 @@ async getAll() {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.informationService.remove(+id);
   }
+ @Get('departement')
+ async getInformationByDepatement() {
+  return await this.informationService.getInformationByDepartement();
+ }
+
+ @Get('date')
+ async getInformationByDate() {
+  return await this.informationService.getInformationByDate();
+ }
+ 
 }
