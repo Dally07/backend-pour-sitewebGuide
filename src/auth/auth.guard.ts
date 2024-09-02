@@ -21,6 +21,7 @@ export class AuthGuard implements CanActivate{
 
         const token = this.extractTokenFromHeader(request);
         if (!token) {
+            console.log('token not found');
             throw new UnauthorizedException();
         }
         
@@ -30,13 +31,14 @@ export class AuthGuard implements CanActivate{
                 {
                     secret: jwtConstants.secret
                 }
+               
             );
                 console.log('payload:' ,payload);
                 console.log('payload.sub:' , payload.sub);
                 request.userId = payload.sub;
                 request.user = payload;
         } catch {
-            console.error('erreur de verification jwt' , error);
+            console.error(' jwt verification error' , error);
             throw new UnauthorizedException();
         }
         return true;
@@ -45,6 +47,7 @@ export class AuthGuard implements CanActivate{
     
     private extractTokenFromHeader(request: Request): string | undefined {
         const [type, token] = request.headers.authorization?.split(' ') ?? [];
+        console.log('authorization header:', request.headers.authorization);
         return type === 'Bearer' ? token: undefined;
     }
     }

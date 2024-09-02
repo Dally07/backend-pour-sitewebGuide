@@ -1,10 +1,9 @@
-import {Injectable, Logger,  UseGuards } from '@nestjs/common';
+import {Injectable, Logger,  NotFoundException,  UseGuards } from '@nestjs/common';
 import { CreateInformationDto } from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Information } from '../information/entities/information.entity';
 import { Repository } from 'typeorm';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { User } from 'src/user/entities/user.entity';
 import { Departement } from 'src/departement/entities/departement.entity';
 
@@ -22,39 +21,11 @@ export class InformationService {
     @InjectRepository(Departement)
     private readonly departementRepository: Repository<Departement>,
 
-    private readonly logger = new Logger(InformationService.name),
+    private readonly logger : Logger
    
    
   ){}
   
-
-
-  async findAllByDepartement(departementName: string): Promise<Information[]> {
-    return this.informationRepository
-      .createQueryBuilder('info')
-      .innerJoin('info.user', 'user')
-      .innerJoin('user.departement', 'departement')
-      .where('departement.nomDepartement = :departementName', { departementName })
-      .getMany();
-  }
-
-  @UseGuards(AuthGuard)
-  async findAllByUserDepartement(userId: number): Promise<Information[]> {
-    const user = await this.informationRepository.findOne({
-      where: {userId},
-      relations: ['userId' , 'userId.departementIdDepartement']
-    });
-
-    if (user) {
-      return this.informationRepository.find({
-        where: {userId: user.userId},
-      });
-    }
-    return [];
-  }
-
-
-
   async create(createInformationDto: CreateInformationDto , { IP, hostname }: { IP: string; hostname: string; }, userId: number , imageData: string): Promise<Information> {
     try{
       
@@ -77,9 +48,100 @@ export class InformationService {
   }
   }
 
- 
+  async getInformationByDepartement(): Promise <any> {
 
-  
+    try {
+      const query = `
+      SELECT departement.nomDepartement, COUNT(*) AS nombre_informations
+      FROM information
+      INNER JOIN user ON information.userId = user.userId
+      INNER JOIN departement ON user.departementIdDepartement = departement.idDepartement
+      GROUP BY departement.nomDepartement;
+      `;
+      console.log(query);
+      return await this.informationRepository.query(query);
+      
+     
+    } catch (error) {
+      this.logger.error(`failed to get info dep: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getInformationByDate(): Promise<any> {
+    try {
+      const query = await this.informationRepository.query( `
+      SELECT DATE(information.date) AS date_information, COUNT(*) AS nombre_information
+      FROM information
+      GROUP BY DATE(information.date)
+      ORDER BY date_information;
+      `); 
+      console.log(query);
+      return (query);
+      
+     
+    } catch (error) {
+      this.logger.log(`failed to get info date: ${error.message}`);
+      throw error;
+    } 
+}
+
+async searchInfoByDepartement(departementName: string): Promise<any> {
+  const departement = await this.departementRepository.findOne({where: {nomDepartement: departementName}});
+  if (!departement){
+    return[];
+  }
+
+  const informations = await this.informationRepository.createQueryBuilder('information')
+  .innerJoin('information.user', 'user')
+  .where('user.departementIdDepartement = :departementId', {departementId: departement.idDepartement})
+  .select(['information.titreInfo'])
+  .getMany();
+  return informations;
+}
+
+async getLastinfo(): Promise<Information> {
+  const lastInfo =  this.informationRepository.find({
+    order: {
+      date: 'DESC',
+    },
+    take: 1,
+  });
+  return lastInfo[0];
+}
+
+async getTitreInformationByDepartement() {
+  try {
+    const query = await this.informationRepository.query(`
+    SELECT * FROM information ORDER BY date DESC LIMIT 1
+    `)
+    console.log(query);
+    return query[0];
+
+  }catch (error) {
+    this.logger.log(`404 not found ${error.message}`);
+  }
+}
+
+async getTotalInformations(): Promise<number> {
+  const result = await this.informationRepository.query('SELECT COUNT(*) AS total_informations FROM information');
+  return result[0].total_informations;
+}
+
+async getTotalUsers(): Promise<number> {
+  const result = await this.informationRepository.query('SELECT COUNT(*) AS total_users FROM user');
+  return result[0].total_users;
+}
+
+async getTotalInformationsByUser(userId: number): Promise<Information> {
+  const result = await this.informationRepository.query('SELECT COUNT(*) AS total_informations_by_user FROM information WHERE userId = ?', [userId]);
+  return result[0].total_informations_by_user;
+}
+
+async getcurrentUsername() {
+
+}
+
 
   update(idInformation: number, updateInformationDto: UpdateInformationDto) {
     return this.informationRepository.update(idInformation, updateInformationDto);
@@ -99,45 +161,20 @@ export class InformationService {
     return informationlist;
   }
 
-  findOne(idInformation: number) {
-    return this.informationRepository.findOneBy({idInformation});
+  async findOne(idInformation: number){
+    this.logger.log(`attempting to find info with id ${idInformation}`);
+    const information = await this.informationRepository.findOneBy({ idInformation});
+    if (!information) {
+      this.logger.warn(`info with id ${idInformation} not found`);
+      throw new NotFoundException(`info with id ${idInformation} not found`);
+
+    }
+    this.logger.log(`found information: ${JSON.stringify(information)}`);
+    return information;
+    
   }
 
-  async getInformationByDepartement() {
-
-    try {
-      return await this.informationRepository.query(`
-      SELECT departement.nomDepartement, COUNT(*) AS nombre_informations
-      FROM information
-      INNER JOIN user ON information.userId = user.userId
-      INNER JOIN departement ON user.departementIdDepartement = departement.idDepartement
-      GROUP BY departement.nomDepartement;
-      `);
-      
-     
-    } catch (error) {
-      this.logger.error(`failed to get info dep: ${error.message}`);
-      throw error;
-    }
-  }
-
-  async getInformationByDate() {
-    try {
-      return await this.informationRepository.query(`
-      SELECT DATE(information.date) AS date_information, COUNT(*) AS nombre_informations
-      FROM information
-      GROUP BY DATE(information.date)
-      ORDER BY date_information;
-      `); 
-      
-     
-    } catch (error) {
-      this.logger.log(`failed to get info date: ${error.message}`);
-      throw error;
-    }
-
- 
-}
+  
 
 }
 

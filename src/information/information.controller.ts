@@ -1,11 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards, UnauthorizedException, UploadedFile, PipeTransform, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseInterceptors, UseGuards, UnauthorizedException, UploadedFile, PipeTransform, Res, Logger, ParseIntPipe, UseFilters, NotFoundException, Query, UsePipes, ValidationPipe, BadRequestException } from '@nestjs/common';
 import { InformationService } from './information.service';
-import { CreateInformationDto } from './dto/create-information.dto';
+import { CreateInformationDto} from './dto/create-information.dto';
 import { UpdateInformationDto } from './dto/update-information.dto';
 import { IpHostnameMiddleware } from 'src/ip-hostname/ip-hostname.middleware';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express, Response } from 'express';
+import { HttpExceptionFilter } from 'src/http-exception-filter/http-exception-filter';
+import { Information } from './entities/information.entity';
+
 
 
 
@@ -24,17 +27,16 @@ export interface ExtendedRequest extends Request {
 }
 
 
-
-
-
-
-
-
 @Controller('information')
+@UseFilters(HttpExceptionFilter)
+@UsePipes(new ValidationPipe())
 
 export class InformationController {
-  constructor(private readonly informationService: InformationService) {}
+  constructor(private readonly informationService: InformationService, 
+    private readonly logger: Logger
+  ) {}
   
+ 
 
   @Post()
   @UseGuards(AuthGuard)
@@ -89,13 +91,49 @@ export class InformationController {
   }
 
 
-  
 
-  @Get('department/:userId')
-  async findAllByUserDepartement(@Param('userId') userId: number) {
-    await this.informationService.findAllByUserDepartement(userId)
+  @Get('departement')
+  async getInformationByDepatement() { 
+   return await this.informationService.getInformationByDepartement();
+  }
+ 
+  @Get('date')
+  async getInformationByDate() {
+   return await this.informationService.getInformationByDate();
   }
 
+  @Get('total-informations')
+  async getTotalInformations() {
+    return this.informationService.getTotalInformations();
+  }
+
+  @Get('total-users')
+  async getTotalUsers() {
+    return this.informationService.getTotalUsers();
+  }
+
+  @Get('search')
+  async search(@Query('departementName') departementName: string) {
+    return await this.informationService.searchInfoByDepartement(departementName);
+  }
+
+
+
+  
+  @UseGuards(AuthGuard)
+  @Get('total-informations-by-user/:userId')
+  async getTotalInformationsByUser(@Request() req: ExtendedRequest,) {
+    const userId = req.user.sub;
+    return this.informationService.getTotalInformationsByUser(userId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('current-username')
+  async getCurrentUsername(@Request() req: ExtendedRequest) {
+    const username = req.user.username;
+    return  username;
+  }
+ 
 
 
 @Get()
@@ -104,32 +142,45 @@ async getAll() {
   return allinfo.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
-
-
+@Get('last')
+findLastInfo(): Promise<Information> {
+  return this.informationService.getTitreInformationByDepartement();
+}
 
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.informationService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) idInformation: number) {
+    this.logger.log(`fetching info with id ${idInformation} not found`);
+
+    
+
+    const information = await this.informationService.findOne(idInformation);
+    if(isNaN(idInformation)){
+      throw new BadRequestException(`invalid ID ${idInformation} format`);
+    }
+
+    if (!information) {
+      this.logger.warn(`information with id ${idInformation} not found`);
+      throw new NotFoundException(`information with id ${idInformation} not found`);
+    }
+    console.log(information);
+    return information;
   }
+  
+
+
+
+
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateInformationDto: UpdateInformationDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateInformationDto: UpdateInformationDto) {
     return this.informationService.update(+id, updateInformationDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
+  remove(@Param('id', ) id: number) {
     return this.informationService.remove(+id);
   }
- @Get('departement')
- async getInformationByDepatement() {
-  return await this.informationService.getInformationByDepartement();
- }
 
- @Get('date')
- async getInformationByDate() {
-  return await this.informationService.getInformationByDate();
- }
  
 }

@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { jwtConstants } from './auth/constantes';
 import * as cors from 'cors';
 import * as dotenv from 'dotenv';
+import { Migration } from 'typeorm';
 
 dotenv.config();
 
@@ -28,7 +29,10 @@ dotenv.config();
     password : "noah1112",
     database : "websites",
     entities : [User,Departement,Information],
-    synchronize : true
+    synchronize : true,
+    logging: true,
+    
+    
 
 }),
 UserModule,
